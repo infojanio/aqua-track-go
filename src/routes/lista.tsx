@@ -54,7 +54,16 @@ function ListPage() {
             <p className="text-sm text-muted-foreground">{filtered.length} ocorrência(s)</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Select value={month} onValueChange={setMonth}>
+              <SelectTrigger className="h-11"><SelectValue placeholder="Mês" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os meses</SelectItem>
+                {months.map((m) => (
+                  <SelectItem key={m} value={m} className="capitalize">{formatMonth(m)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={type} onValueChange={(v) => setType(v as LeakType | "all")}>
               <SelectTrigger className="h-11"><SelectValue placeholder="Tipo" /></SelectTrigger>
               <SelectContent>
