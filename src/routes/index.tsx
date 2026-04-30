@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { LatLngExpression } from "leaflet";
 import { AppShell } from "@/components/layout/AppShell";
 import { LeakMapClient as LeakMap } from "@/components/leaks/LeakMapClient";
@@ -8,9 +8,12 @@ import { LeakDetailsSheet } from "@/components/leaks/LeakDetailsSheet";
 import { MetricsBar } from "@/components/dashboard/MetricsBar";
 import { useLeaks } from "@/hooks/useLeaks";
 import { DEFAULT_CENTER, getCurrentPosition } from "@/lib/location";
-import type { Leak } from "@/types/leak";
-import { Plus, X, Loader2, MapPin } from "lucide-react";
+import { LEAK_TYPE_LABEL, LEAK_TYPE_COLOR, type Leak, type LeakType } from "@/types/leak";
+import { Plus, X, Loader2, MapPin, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/")({
   component: MapPage,
@@ -25,6 +28,28 @@ function MapPage() {
 
   const [center, setCenter] = useState<LatLngExpression>([DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]);
   const [usingDefault, setUsingDefault] = useState(true);
+
+  // Filtros do mapa
+  const ALL_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
+  const [selectedTypes, setSelectedTypes] = useState<LeakType[]>(ALL_TYPES);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+
+  const filteredLeaks = useMemo(() => {
+    return leaks.filter((l) => {
+      if (!selectedTypes.includes(l.type)) return false;
+      const day = l.createdAt.slice(0, 10);
+      if (dateFrom && day < dateFrom) return false;
+      if (dateTo && day > dateTo) return false;
+      return true;
+    });
+  }, [leaks, selectedTypes, dateFrom, dateTo]);
+
+  const toggleType = (t: LeakType) =>
+    setSelectedTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+
+  const filtersActive =
+    selectedTypes.length !== ALL_TYPES.length || !!dateFrom || !!dateTo;
 
   // Tenta obter geolocalização; mantém Campos Belos-GO como fallback
   useEffect(() => {
@@ -63,7 +88,7 @@ function MapPage() {
             </div>
           )}
           <LeakMap
-            leaks={leaks}
+            leaks={filteredLeaks}
             center={center}
             selectedId={selected?.id}
             onSelect={setSelected}
@@ -71,6 +96,103 @@ function MapPage() {
             pickMode={pickMode}
             pickedPoint={pickedPoint}
           />
+
+          {/* Botão de Filtros */}
+          <div className="absolute left-3 bottom-3 z-[400]">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  size="sm"
+                  variant={filtersActive ? "default" : "secondary"}
+                  className="h-9 gap-1.5 shadow-lg"
+                >
+                  <Filter className="size-4" />
+                  Filtros
+                  {filtersActive && (
+                    <span className="ml-0.5 rounded-full bg-background/30 px-1.5 text-[10px] font-bold">
+                      {filteredLeaks.length}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" side="top" className="z-[600] w-72 space-y-4">
+                <div>
+                  <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Tipo de vazamento
+                  </Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ALL_TYPES.map((t) => {
+                      const active = selectedTypes.includes(t);
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => toggleType(t)}
+                          className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                            active
+                              ? "border-transparent bg-foreground text-background"
+                              : "border-border bg-card text-muted-foreground hover:border-foreground/40"
+                          }`}
+                        >
+                          <span
+                            className="size-2 rounded-full"
+                            style={{ backgroundColor: LEAK_TYPE_COLOR[t] }}
+                          />
+                          {LEAK_TYPE_LABEL[t]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Período
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="from" className="text-[11px] text-muted-foreground">De</Label>
+                      <Input
+                        id="from"
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="to" className="text-[11px] text-muted-foreground">Até</Label>
+                      <Input
+                        id="to"
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t pt-2">
+                  <span className="text-xs text-muted-foreground">
+                    {filteredLeaks.length} de {leaks.length}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setSelectedTypes(ALL_TYPES);
+                      setDateFrom("");
+                      setDateTo("");
+                    }}
+                    disabled={!filtersActive}
+                  >
+                    Limpar
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Legenda */}
           <div className="pointer-events-none absolute left-3 top-3 z-[400] rounded-xl border bg-card/95 p-2.5 shadow-lg backdrop-blur">
@@ -85,8 +207,8 @@ function MapPage() {
 
           {/* Stats */}
           <div className="pointer-events-none absolute right-3 top-3 z-[400] flex gap-2">
-            <StatPill label="Total" value={leaks.length} />
-            <StatPill label="Abertos" value={leaks.filter((l) => l.status === "open").length} accent="open" />
+            <StatPill label="Total" value={filteredLeaks.length} />
+            <StatPill label="Abertos" value={filteredLeaks.filter((l) => l.status === "open").length} accent="open" />
           </div>
 
           {/* Indicador de localização padrão */}

@@ -17,16 +17,33 @@ function ListPage() {
   const [type, setType] = useState<LeakType | "all">("all");
   const [status, setStatus] = useState<LeakStatus | "all">("all");
   const [order, setOrder] = useState<"newest" | "oldest">("newest");
+  const [month, setMonth] = useState<string>("all");
+
+  // Lista de meses presentes nos dados (YYYY-MM)
+  const months = useMemo(() => {
+    const set = new Set<string>();
+    leaks.forEach((l) => set.add(l.createdAt.slice(0, 7)));
+    return Array.from(set).sort((a, b) => b.localeCompare(a));
+  }, [leaks]);
 
   const filtered = useMemo(() => {
     let r = leaks.filter(
-      (l) => (type === "all" || l.type === type) && (status === "all" || l.status === status),
+      (l) =>
+        (type === "all" || l.type === type) &&
+        (status === "all" || l.status === status) &&
+        (month === "all" || l.createdAt.slice(0, 7) === month),
     );
     r = [...r].sort((a, b) =>
       order === "newest" ? b.createdAt.localeCompare(a.createdAt) : a.createdAt.localeCompare(b.createdAt),
     );
     return r;
-  }, [leaks, type, status, order]);
+  }, [leaks, type, status, order, month]);
+
+  const formatMonth = (ym: string) => {
+    const [y, m] = ym.split("-");
+    const d = new Date(Number(y), Number(m) - 1, 1);
+    return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  };
 
   return (
     <AppShell>
@@ -37,7 +54,16 @@ function ListPage() {
             <p className="text-sm text-muted-foreground">{filtered.length} ocorrência(s)</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Select value={month} onValueChange={setMonth}>
+              <SelectTrigger className="h-11"><SelectValue placeholder="Mês" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os meses</SelectItem>
+                {months.map((m) => (
+                  <SelectItem key={m} value={m} className="capitalize">{formatMonth(m)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={type} onValueChange={(v) => setType(v as LeakType | "all")}>
               <SelectTrigger className="h-11"><SelectValue placeholder="Tipo" /></SelectTrigger>
               <SelectContent>
