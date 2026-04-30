@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { LatLngExpression } from "leaflet";
 import { AppShell } from "@/components/layout/AppShell";
 import { LeakMapClient as LeakMap } from "@/components/leaks/LeakMapClient";
@@ -8,9 +8,12 @@ import { LeakDetailsSheet } from "@/components/leaks/LeakDetailsSheet";
 import { MetricsBar } from "@/components/dashboard/MetricsBar";
 import { useLeaks } from "@/hooks/useLeaks";
 import { DEFAULT_CENTER, getCurrentPosition } from "@/lib/location";
-import type { Leak } from "@/types/leak";
-import { Plus, X, Loader2, MapPin } from "lucide-react";
+import { LEAK_TYPE_LABEL, LEAK_TYPE_COLOR, type Leak, type LeakType } from "@/types/leak";
+import { Plus, X, Loader2, MapPin, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/")({
   component: MapPage,
