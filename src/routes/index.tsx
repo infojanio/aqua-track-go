@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { LeakMap } from "@/components/leaks/LeakMap";
+import { LeakMapClient as LeakMap } from "@/components/leaks/LeakMapClient";
 import { NewLeakDialog } from "@/components/leaks/NewLeakDialog";
 import { LeakDetailsSheet } from "@/components/leaks/LeakDetailsSheet";
 import { useLeaks } from "@/hooks/useLeaks";
