@@ -1,0 +1,50 @@
+import type { Leak } from "@/types/leak";
+
+// Mock dataset — São Paulo region
+export const mockLeaks: Leak[] = [
+  {
+    id: "1",
+    type: "rede",
+    pressure: 42,
+    description: "Vazamento intenso na via principal, água jorrando.",
+    status: "open",
+    latitude: -23.5505,
+    longitude: -46.6333,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    photos: {},
+  },
+  {
+    id: "2",
+    type: "cavalete",
+    pressure: 18,
+    description: "Vazamento no cavalete do imóvel 234.",
+    status: "in_progress",
+    latitude: -23.5605,
+    longitude: -46.6433,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+    photos: {},
+  },
+  {
+    id: "3",
+    type: "ramal",
+    pressure: 25,
+    description: "Ramal predial com vazamento moderado.",
+    status: "done",
+    latitude: -23.5405,
+    longitude: -46.6233,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+    photos: {},
+  },
+  {
+    id: "4",
+    type: "outros",
+    pressure: 10,
+    description: "Hidrômetro com vazamento.",
+    status: "open",
+    latitude: -23.5705,
+    longitude: -46.6533,
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    photos: {},
+  },
+];
