@@ -88,7 +88,7 @@ function MapPage() {
             </div>
           )}
           <LeakMap
-            leaks={leaks}
+            leaks={filteredLeaks}
             center={center}
             selectedId={selected?.id}
             onSelect={setSelected}
@@ -96,6 +96,103 @@ function MapPage() {
             pickMode={pickMode}
             pickedPoint={pickedPoint}
           />
+
+          {/* Botão de Filtros */}
+          <div className="absolute left-3 bottom-3 z-[400]">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  size="sm"
+                  variant={filtersActive ? "default" : "secondary"}
+                  className="h-9 gap-1.5 shadow-lg"
+                >
+                  <Filter className="size-4" />
+                  Filtros
+                  {filtersActive && (
+                    <span className="ml-0.5 rounded-full bg-background/30 px-1.5 text-[10px] font-bold">
+                      {filteredLeaks.length}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" side="top" className="z-[600] w-72 space-y-4">
+                <div>
+                  <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Tipo de vazamento
+                  </Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ALL_TYPES.map((t) => {
+                      const active = selectedTypes.includes(t);
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => toggleType(t)}
+                          className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                            active
+                              ? "border-transparent bg-foreground text-background"
+                              : "border-border bg-card text-muted-foreground hover:border-foreground/40"
+                          }`}
+                        >
+                          <span
+                            className="size-2 rounded-full"
+                            style={{ backgroundColor: LEAK_TYPE_COLOR[t] }}
+                          />
+                          {LEAK_TYPE_LABEL[t]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Período
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="from" className="text-[11px] text-muted-foreground">De</Label>
+                      <Input
+                        id="from"
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="to" className="text-[11px] text-muted-foreground">Até</Label>
+                      <Input
+                        id="to"
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t pt-2">
+                  <span className="text-xs text-muted-foreground">
+                    {filteredLeaks.length} de {leaks.length}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setSelectedTypes(ALL_TYPES);
+                      setDateFrom("");
+                      setDateTo("");
+                    }}
+                    disabled={!filtersActive}
+                  >
+                    Limpar
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Legenda */}
           <div className="pointer-events-none absolute left-3 top-3 z-[400] rounded-xl border bg-card/95 p-2.5 shadow-lg backdrop-blur">
