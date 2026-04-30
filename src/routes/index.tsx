@@ -207,8 +207,8 @@ function MapPage() {
 
           {/* Stats */}
           <div className="pointer-events-none absolute right-3 top-3 z-[400] flex gap-2">
-            <StatPill label="Total" value={leaks.length} />
-            <StatPill label="Abertos" value={leaks.filter((l) => l.status === "open").length} accent="open" />
+            <StatPill label="Total" value={filteredLeaks.length} />
+            <StatPill label="Abertos" value={filteredLeaks.filter((l) => l.status === "open").length} accent="open" />
           </div>
 
           {/* Indicador de localização padrão */}
