@@ -29,6 +29,28 @@ function MapPage() {
   const [center, setCenter] = useState<LatLngExpression>([DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]);
   const [usingDefault, setUsingDefault] = useState(true);
 
+  // Filtros do mapa
+  const ALL_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
+  const [selectedTypes, setSelectedTypes] = useState<LeakType[]>(ALL_TYPES);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+
+  const filteredLeaks = useMemo(() => {
+    return leaks.filter((l) => {
+      if (!selectedTypes.includes(l.type)) return false;
+      const day = l.createdAt.slice(0, 10);
+      if (dateFrom && day < dateFrom) return false;
+      if (dateTo && day > dateTo) return false;
+      return true;
+    });
+  }, [leaks, selectedTypes, dateFrom, dateTo]);
+
+  const toggleType = (t: LeakType) =>
+    setSelectedTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+
+  const filtersActive =
+    selectedTypes.length !== ALL_TYPES.length || !!dateFrom || !!dateTo;
+
   // Tenta obter geolocalização; mantém Campos Belos-GO como fallback
   useEffect(() => {
     let cancelled = false;
