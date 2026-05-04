@@ -25,11 +25,21 @@ function ClickHandler({ onMapClick, enabled }: { onMapClick?: (lat: number, lng:
   return null;
 }
 
-function FlyTo({ position }: { position: LatLngExpression | null }) {
+function FlyTo({ position, zoom = 16 }: { position: LatLngExpression | null; zoom?: number }) {
   const map = useMap();
   useEffect(() => {
-    if (position) map.flyTo(position, Math.max(map.getZoom(), 16), { duration: 0.8 });
-  }, [position, map]);
+    if (position) map.flyTo(position, Math.max(map.getZoom(), zoom), { duration: 0.8 });
+  }, [position, zoom, map]);
+  return null;
+}
+
+function CenterOn({ center }: { center: LatLngExpression }) {
+  const map = useMap();
+  const key = Array.isArray(center) ? `${center[0]},${center[1]}` : JSON.stringify(center);
+  useEffect(() => {
+    map.flyTo(center, 14, { duration: 0.9 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   return null;
 }
 
@@ -63,6 +73,7 @@ export function LeakMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <ClickHandler onMapClick={onMapClick} enabled={pickMode} />
+        <CenterOn center={center} />
         <FlyTo position={flyPos} />
 
         {leaks.map((leak) => (
