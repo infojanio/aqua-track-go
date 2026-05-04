@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
-import type { LatLngExpression } from "leaflet";
-import { leakIcon } from "./leakIcon";
+import type { LatLngExpression, Marker as LeafletMarker } from "leaflet";
+import { leakIcon, pickPinIcon } from "./leakIcon";
 import { LEAK_TYPE_LABEL, type Leak } from "@/types/leak";
 import { StatusBadge, TypeBadge } from "./Badges";
 import { Droplets, Gauge, ImageIcon } from "lucide-react";
@@ -14,6 +14,7 @@ interface Props {
   onMapClick?: (lat: number, lng: number) => void;
   pickMode?: boolean;
   pickedPoint?: { lat: number; lng: number } | null;
+  onPickedPointChange?: (p: { lat: number; lng: number }) => void;
 }
 
 function ClickHandler({ onMapClick, enabled }: { onMapClick?: (lat: number, lng: number) => void; enabled: boolean }) {
@@ -51,7 +52,9 @@ export function LeakMap({
   onMapClick,
   pickMode = false,
   pickedPoint,
+  onPickedPointChange,
 }: Props) {
+  const pickMarkerRef = useRef<LeafletMarker | null>(null);
   const selected = leaks.find((l) => l.id === selectedId);
   const flyPos: LatLngExpression | null = selected
     ? [selected.latitude, selected.longitude]
@@ -126,14 +129,39 @@ export function LeakMap({
         {pickedPoint && (
           <Marker
             position={[pickedPoint.lat, pickedPoint.lng]}
-            icon={leakIcon("outros", true)}
-          />
+            icon={pickPinIcon()}
+            draggable
+            autoPan
+            ref={(ref) => {
+              pickMarkerRef.current = ref as unknown as LeafletMarker | null;
+            }}
+            eventHandlers={{
+              dragend: (e) => {
+                const m = e.target as LeafletMarker;
+                const ll = m.getLatLng();
+                onPickedPointChange?.({ lat: ll.lat, lng: ll.lng });
+              },
+            }}
+          >
+            <Popup>
+              <div className="text-xs">
+                <p className="font-semibold text-foreground">Local do vazamento</p>
+                <p className="text-muted-foreground">Arraste para ajustar a posição</p>
+              </div>
+            </Popup>
+          </Marker>
         )}
       </MapContainer>
 
       {pickMode && (
         <div className="pointer-events-none absolute left-1/2 top-4 z-[400] -translate-x-1/2 rounded-full bg-foreground/90 px-4 py-2 text-xs font-medium text-background shadow-lg">
           Toque no mapa para marcar a localização
+        </div>
+      )}
+
+      {pickedPoint && !pickMode && (
+        <div className="pointer-events-none absolute left-1/2 top-4 z-[400] -translate-x-1/2 rounded-full bg-foreground/90 px-4 py-2 text-xs font-medium text-background shadow-lg">
+          Arraste o pino vermelho para ajustar a posição
         </div>
       )}
     </div>

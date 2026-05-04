@@ -131,6 +131,7 @@ function MapPage() {
             onMapClick={handleMapClick}
             pickMode={pickMode}
             pickedPoint={pickedPoint}
+            onPickedPointChange={setPickedPoint}
           />
 
           {/* Botão de Filtros */}
