@@ -7,13 +7,15 @@ import { NewLeakDialog } from "@/components/leaks/NewLeakDialog";
 import { LeakDetailsSheet } from "@/components/leaks/LeakDetailsSheet";
 import { MetricsBar } from "@/components/dashboard/MetricsBar";
 import { useLeaks } from "@/hooks/useLeaks";
-import { DEFAULT_CENTER, getCurrentPosition } from "@/lib/location";
+import { getCurrentPosition } from "@/lib/location";
+import { REGIONAL_CITIES, DEFAULT_CITY_ID, getCityById, cityFullName } from "@/lib/cities";
 import { LEAK_TYPE_LABEL, LEAK_TYPE_COLOR, type Leak, type LeakType } from "@/types/leak";
-import { Plus, X, Loader2, MapPin, Filter } from "lucide-react";
+import { Plus, X, Loader2, MapPin, Filter, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/")({
   component: MapPage,
@@ -26,8 +28,10 @@ function MapPage() {
   const [pickMode, setPickMode] = useState(false);
   const [pickedPoint, setPickedPoint] = useState<{ lat: number; lng: number } | null>(null);
 
-  const [center, setCenter] = useState<LatLngExpression>([DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]);
-  const [usingDefault, setUsingDefault] = useState(true);
+  const [cityId, setCityId] = useState<string>(DEFAULT_CITY_ID);
+  const city = getCityById(cityId);
+  const [center, setCenter] = useState<LatLngExpression>([city.lat, city.lng]);
+  const [usingGps, setUsingGps] = useState(false);
 
   // Filtros do mapa
   const ALL_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
@@ -51,22 +55,30 @@ function MapPage() {
   const filtersActive =
     selectedTypes.length !== ALL_TYPES.length || !!dateFrom || !!dateTo;
 
-  // Tenta obter geolocalização; mantém Campos Belos-GO como fallback
+  // Tenta obter geolocalização apenas inicialmente; ao trocar a cidade, centraliza nela.
   useEffect(() => {
     let cancelled = false;
     getCurrentPosition()
       .then((pos) => {
         if (cancelled) return;
         setCenter([pos.lat, pos.lng]);
-        setUsingDefault(false);
+        setUsingGps(true);
       })
       .catch(() => {
-        // mantém DEFAULT_CENTER (Campos Belos - GO)
+        // mantém centro da cidade selecionada
       });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // Quando o usuário troca a cidade, recentralizamos o mapa nela
+  const handleCityChange = (id: string) => {
+    setCityId(id);
+    const c = getCityById(id);
+    setCenter([c.lat, c.lng]);
+    setUsingGps(false);
+  };
 
   const handleMapClick = (lat: number, lng: number) => {
     setPickedPoint({ lat, lng });
@@ -77,8 +89,32 @@ function MapPage() {
   return (
     <AppShell>
       <div className="flex h-full flex-col gap-3 overflow-y-auto p-3 sm:p-4">
+        {/* Seletor de cidade da Regional */}
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Building2 className="size-4" />
+          </div>
+          <div className="flex flex-1 flex-col">
+            <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Cidade da Regional
+            </Label>
+            <Select value={cityId} onValueChange={handleCityChange}>
+              <SelectTrigger className="h-9 border-0 bg-transparent px-0 text-sm font-semibold shadow-none focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {REGIONAL_CITIES.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {cityFullName(c)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Indicadores do último mês */}
-        <MetricsBar />
+        <MetricsBar cityId={cityId} />
 
         {/* Mapa em card */}
         <section className="relative flex-1 min-h-[420px] overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -211,13 +247,11 @@ function MapPage() {
             <StatPill label="Abertos" value={filteredLeaks.filter((l) => l.status === "open").length} accent="open" />
           </div>
 
-          {/* Indicador de localização padrão */}
-          {usingDefault && (
-            <div className="pointer-events-none absolute bottom-3 left-1/2 z-[400] -translate-x-1/2 rounded-full border bg-card/95 px-3 py-1.5 text-[11px] font-medium text-muted-foreground shadow-md backdrop-blur">
-              <MapPin className="mr-1 inline size-3 text-primary" />
-              Exibindo {DEFAULT_CENTER.label} (padrão)
-            </div>
-          )}
+          {/* Indicador de localização */}
+          <div className="pointer-events-none absolute bottom-3 left-1/2 z-[400] -translate-x-1/2 rounded-full border bg-card/95 px-3 py-1.5 text-[11px] font-medium text-muted-foreground shadow-md backdrop-blur">
+            <MapPin className="mr-1 inline size-3 text-primary" />
+            {usingGps ? "Sua localização atual" : `Exibindo ${cityFullName(city)}`}
+          </div>
 
           {/* FAB */}
           {pickMode ? (
