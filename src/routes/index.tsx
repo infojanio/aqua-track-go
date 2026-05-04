@@ -230,14 +230,48 @@ function MapPage() {
             </Popover>
           </div>
 
-          {/* Legenda */}
-          <div className="pointer-events-none absolute left-3 top-3 z-[400] rounded-xl border bg-card/95 p-2.5 shadow-lg backdrop-blur">
-            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Tipos</p>
-            <div className="space-y-1">
-              <Legend color="var(--leak-cavalete)" label="Cavalete" />
-              <Legend color="var(--leak-ramal)" label="Ramal" />
-              <Legend color="var(--leak-rede)" label="Rede" />
-              <Legend color="var(--leak-outros)" label="Outros" />
+          {/* Filtro rápido por tipo (chips clicáveis) */}
+          <div className="absolute left-3 top-3 z-[400] rounded-xl border bg-card/95 p-2 shadow-lg backdrop-blur">
+            <div className="mb-1.5 flex items-center justify-between gap-2 px-1">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                Tipos
+              </p>
+              <button
+                type="button"
+                onClick={() => setSelectedTypes(ALL_TYPES)}
+                className="text-[10px] font-semibold text-primary hover:underline"
+              >
+                Todos
+              </button>
+            </div>
+            <div className="flex flex-col gap-1">
+              {ALL_TYPES.map((t) => {
+                const active = selectedTypes.includes(t);
+                const count = leaks.filter((l) => l.type === t).length;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleType(t)}
+                    className={`flex items-center justify-between gap-2 rounded-lg border px-2 py-1 text-xs font-medium transition ${
+                      active
+                        ? "border-foreground/20 bg-card text-foreground"
+                        : "border-transparent bg-transparent text-muted-foreground/60 line-through hover:text-foreground"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className="size-2.5 rounded-full ring-2 ring-white"
+                        style={{ backgroundColor: LEAK_TYPE_COLOR[t] }}
+                      />
+                      {LEAK_TYPE_LABEL[t]}
+                    </span>
+                    <span className="rounded-full bg-muted px-1.5 text-[10px] font-bold text-muted-foreground">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
