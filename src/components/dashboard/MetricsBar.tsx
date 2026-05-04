@@ -11,8 +11,8 @@ const fmtMonth = (iso: string) => {
   return new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 };
 
-export function MetricsBar() {
-  const { data, isLoading } = useLastMonthMetrics();
+export function MetricsBar({ cityId }: { cityId: string }) {
+  const { data, isLoading } = useLastMonthMetrics(cityId);
 
   return (
     <div className="space-y-2">
