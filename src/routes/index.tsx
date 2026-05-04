@@ -320,14 +320,6 @@ function MapPage() {
   );
 }
 
-function Legend({ color, label }: { color: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="size-2.5 rounded-full ring-2 ring-white" style={{ backgroundColor: color }} />
-      <span className="text-foreground">{label}</span>
-    </div>
-  );
-}
 
 function StatPill({ label, value, accent }: { label: string; value: number; accent?: "open" }) {
   return (
