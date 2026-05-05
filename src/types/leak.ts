@@ -9,6 +9,9 @@ export interface Leak {
   status: LeakStatus;
   latitude: number;
   longitude: number;
+  cityId?: string;
+  /** Volume estimado de água perdida em m³ */
+  lostVolumeM3?: number;
   createdAt: string;
   updatedAt?: string;
   photos: {
@@ -23,6 +26,8 @@ export interface CreateLeakInput {
   description?: string;
   latitude: number;
   longitude: number;
+  cityId?: string;
+  lostVolumeM3?: number;
   createdAt?: string;
   photos?: { before?: string };
 }

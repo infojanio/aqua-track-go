@@ -1,50 +1,61 @@
-import type { Leak } from "@/types/leak";
+import type { Leak, LeakType, LeakStatus } from "@/types/leak";
+import { REGIONAL_CITIES } from "@/lib/cities";
 
-// Mock dataset — São Paulo region
-export const mockLeaks: Leak[] = [
-  {
-    id: "1",
-    type: "rede",
-    pressure: 42,
-    description: "Vazamento intenso na via principal, água jorrando.",
-    status: "open",
-    latitude: -23.5505,
-    longitude: -46.6333,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    photos: {},
-  },
-  {
-    id: "2",
-    type: "cavalete",
-    pressure: 18,
-    description: "Vazamento no cavalete do imóvel 234.",
-    status: "in_progress",
-    latitude: -23.5605,
-    longitude: -46.6433,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-    photos: {},
-  },
-  {
-    id: "3",
-    type: "ramal",
-    pressure: 25,
-    description: "Ramal predial com vazamento moderado.",
-    status: "done",
-    latitude: -23.5405,
-    longitude: -46.6233,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-    photos: {},
-  },
-  {
-    id: "4",
-    type: "outros",
-    pressure: 10,
-    description: "Hidrômetro com vazamento.",
-    status: "open",
-    latitude: -23.5705,
-    longitude: -46.6533,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    photos: {},
-  },
-];
+const TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
+const STATUSES: LeakStatus[] = ["open", "in_progress", "done"];
+
+// Gerador determinístico simples
+function rand(seed: number) {
+  let s = seed | 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) | 0;
+    return ((s >>> 0) % 100000) / 100000;
+  };
+}
+
+function generate(): Leak[] {
+  const r = rand(42);
+  const list: Leak[] = [];
+  const now = new Date();
+  let id = 1;
+
+  REGIONAL_CITIES.forEach((city, ci) => {
+    // Para cada cidade, gera vazamentos dos últimos 6 meses
+    for (let monthOffset = 0; monthOffset < 6; monthOffset++) {
+      const count = 2 + Math.floor(r() * 6); // 2~7 vazamentos por mês
+      for (let i = 0; i < count; i++) {
+        const type = TYPES[Math.floor(r() * TYPES.length)];
+        const status = monthOffset === 0
+          ? STATUSES[Math.floor(r() * STATUSES.length)]
+          : (r() > 0.25 ? "done" : "in_progress");
+        const d = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1 + Math.floor(r() * 27),
+          Math.floor(r() * 24), Math.floor(r() * 60));
+        const latJitter = (r() - 0.5) * 0.04;
+        const lngJitter = (r() - 0.5) * 0.04;
+        // Volume perdido estimado (m³): rede vaza mais; outros menos
+        const baseVol = type === "rede" ? 220 : type === "ramal" ? 90 : type === "cavalete" ? 40 : 25;
+        const lost = Math.round(baseVol * (0.6 + r() * 1.6));
+        list.push({
+          id: String(id++),
+          type,
+          pressure: Math.round(10 + r() * 40),
+          description: `Vazamento ${type} em ${city.name}.`,
+          status,
+          latitude: city.lat + latJitter,
+          longitude: city.lng + lngJitter,
+          cityId: city.id,
+          lostVolumeM3: lost,
+          createdAt: d.toISOString(),
+          updatedAt: status === "done" ? new Date(d.getTime() + 1000 * 60 * 60 * 24).toISOString() : undefined,
+          photos: {},
+        });
+      }
+    }
+    // mantém ci usado
+    void ci;
+  });
+
+  return list;
+}
+
+export const mockLeaks: Leak[] = generate();
