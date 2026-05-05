@@ -10,12 +10,13 @@ import { useLeaks } from "@/hooks/useLeaks";
 import { getCurrentPosition } from "@/lib/location";
 import { REGIONAL_CITIES, DEFAULT_CITY_ID, getCityById, cityFullName } from "@/lib/cities";
 import { LEAK_TYPE_LABEL, LEAK_TYPE_COLOR, type Leak, type LeakType } from "@/types/leak";
-import { Plus, X, Loader2, MapPin, Filter, Building2 } from "lucide-react";
+import { Plus, X, Loader2, MapPin, Filter, Building2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { currentYM, lastNMonths, formatMonthLabel } from "@/lib/dates";
 
 export const Route = createFileRoute("/")({
   component: MapPage,
@@ -36,24 +37,23 @@ function MapPage() {
   // Filtros do mapa
   const ALL_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
   const [selectedTypes, setSelectedTypes] = useState<LeakType[]>(ALL_TYPES);
-  const [dateFrom, setDateFrom] = useState<string>("");
-  const [dateTo, setDateTo] = useState<string>("");
+  const [refMonth, setRefMonth] = useState<string>(currentYM());
+  const monthOptions = useMemo(() => lastNMonths(12), []);
 
+  // Filtra leaks: por cidade, tipos e mês de referência
   const filteredLeaks = useMemo(() => {
     return leaks.filter((l) => {
+      if (l.cityId && l.cityId !== cityId) return false;
       if (!selectedTypes.includes(l.type)) return false;
-      const day = l.createdAt.slice(0, 10);
-      if (dateFrom && day < dateFrom) return false;
-      if (dateTo && day > dateTo) return false;
+      if (l.createdAt.slice(0, 7) !== refMonth) return false;
       return true;
     });
-  }, [leaks, selectedTypes, dateFrom, dateTo]);
+  }, [leaks, selectedTypes, refMonth, cityId]);
 
   const toggleType = (t: LeakType) =>
     setSelectedTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
-  const filtersActive =
-    selectedTypes.length !== ALL_TYPES.length || !!dateFrom || !!dateTo;
+  const filtersActive = selectedTypes.length !== ALL_TYPES.length;
 
   // Tenta obter geolocalização apenas inicialmente; ao trocar a cidade, centraliza nela.
   useEffect(() => {
@@ -89,32 +89,57 @@ function MapPage() {
   return (
     <AppShell>
       <div className="flex h-full flex-col gap-3 overflow-y-auto p-3 sm:p-4">
-        {/* Seletor de cidade da Regional */}
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Building2 className="size-4" />
+        {/* Seletores: cidade + mês de referência */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="flex items-center gap-2 rounded-lg border bg-card p-2">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Building2 className="size-4" />
+            </div>
+            <div className="flex flex-1 flex-col">
+              <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Cidade da Regional
+              </Label>
+              <Select value={cityId} onValueChange={handleCityChange}>
+                <SelectTrigger className="h-8 border-0 bg-transparent px-0 text-sm font-semibold shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {REGIONAL_CITIES.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {cityFullName(c)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex flex-1 flex-col">
-            <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Cidade da Regional
-            </Label>
-            <Select value={cityId} onValueChange={handleCityChange}>
-              <SelectTrigger className="h-9 border-0 bg-transparent px-0 text-sm font-semibold shadow-none focus:ring-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {REGIONAL_CITIES.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {cityFullName(c)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+          <div className="flex items-center gap-2 rounded-lg border bg-card p-2">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Calendar className="size-4" />
+            </div>
+            <div className="flex flex-1 flex-col">
+              <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Mês de referência
+              </Label>
+              <Select value={refMonth} onValueChange={setRefMonth}>
+                <SelectTrigger className="h-8 border-0 bg-transparent px-0 text-sm font-semibold capitalize shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((ym) => (
+                    <SelectItem key={ym} value={ym} className="capitalize">
+                      {formatMonthLabel(ym)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
-        {/* Indicadores do último mês */}
-        <MetricsBar cityId={cityId} />
+        {/* Indicadores do mês selecionado */}
+        <MetricsBar cityId={cityId} month={refMonth} />
 
         {/* Mapa em card */}
         <section className="relative flex-1 min-h-[420px] overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -182,34 +207,6 @@ function MapPage() {
                   </div>
                 </div>
 
-                <div>
-                  <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Período
-                  </Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label htmlFor="from" className="text-[11px] text-muted-foreground">De</Label>
-                      <Input
-                        id="from"
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => setDateFrom(e.target.value)}
-                        className="h-9"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="to" className="text-[11px] text-muted-foreground">Até</Label>
-                      <Input
-                        id="to"
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => setDateTo(e.target.value)}
-                        className="h-9"
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex items-center justify-between border-t pt-2">
                   <span className="text-xs text-muted-foreground">
                     {filteredLeaks.length} de {leaks.length}
@@ -217,11 +214,7 @@ function MapPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
-                      setSelectedTypes(ALL_TYPES);
-                      setDateFrom("");
-                      setDateTo("");
-                    }}
+                    onClick={() => setSelectedTypes(ALL_TYPES)}
                     disabled={!filtersActive}
                   >
                     Limpar

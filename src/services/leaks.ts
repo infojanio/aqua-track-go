@@ -24,13 +24,14 @@ export const leaksService = {
       description: input.description,
       latitude: input.latitude,
       longitude: input.longitude,
+      cityId: input.cityId,
+      lostVolumeM3: input.lostVolumeM3,
       status: "open",
       createdAt: input.createdAt ?? new Date().toISOString(),
       photos: { before: input.photos?.before },
     };
     store = [leak, ...store];
     return leak;
-    // return (await api.post<Leak>("/leaks", input)).data;
   },
 
   // PATCH /leaks/:id
