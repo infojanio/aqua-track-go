@@ -10,12 +10,13 @@ import { useLeaks } from "@/hooks/useLeaks";
 import { getCurrentPosition } from "@/lib/location";
 import { REGIONAL_CITIES, DEFAULT_CITY_ID, getCityById, cityFullName } from "@/lib/cities";
 import { LEAK_TYPE_LABEL, LEAK_TYPE_COLOR, type Leak, type LeakType } from "@/types/leak";
-import { Plus, X, Loader2, MapPin, Filter, Building2 } from "lucide-react";
+import { Plus, X, Loader2, MapPin, Filter, Building2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { currentYM, lastNMonths, formatMonthLabel } from "@/lib/dates";
 
 export const Route = createFileRoute("/")({
   component: MapPage,
@@ -36,24 +37,23 @@ function MapPage() {
   // Filtros do mapa
   const ALL_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
   const [selectedTypes, setSelectedTypes] = useState<LeakType[]>(ALL_TYPES);
-  const [dateFrom, setDateFrom] = useState<string>("");
-  const [dateTo, setDateTo] = useState<string>("");
+  const [refMonth, setRefMonth] = useState<string>(currentYM());
+  const monthOptions = useMemo(() => lastNMonths(12), []);
 
+  // Filtra leaks: por cidade, tipos e mês de referência
   const filteredLeaks = useMemo(() => {
     return leaks.filter((l) => {
+      if (l.cityId && l.cityId !== cityId) return false;
       if (!selectedTypes.includes(l.type)) return false;
-      const day = l.createdAt.slice(0, 10);
-      if (dateFrom && day < dateFrom) return false;
-      if (dateTo && day > dateTo) return false;
+      if (l.createdAt.slice(0, 7) !== refMonth) return false;
       return true;
     });
-  }, [leaks, selectedTypes, dateFrom, dateTo]);
+  }, [leaks, selectedTypes, refMonth, cityId]);
 
   const toggleType = (t: LeakType) =>
     setSelectedTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
-  const filtersActive =
-    selectedTypes.length !== ALL_TYPES.length || !!dateFrom || !!dateTo;
+  const filtersActive = selectedTypes.length !== ALL_TYPES.length;
 
   // Tenta obter geolocalização apenas inicialmente; ao trocar a cidade, centraliza nela.
   useEffect(() => {
