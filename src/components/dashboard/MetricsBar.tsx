@@ -1,5 +1,5 @@
 import { Droplet, Receipt, TrendingDown, TrendingUp } from "lucide-react";
-import { useLastMonthMetrics } from "@/hooks/useMetrics";
+import { useMonthMetrics } from "@/hooks/useMetrics";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -11,8 +11,9 @@ const fmtMonth = (iso: string) => {
   return new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 };
 
-export function MetricsBar({ cityId }: { cityId: string }) {
-  const { data, isLoading } = useLastMonthMetrics(cityId);
+export function MetricsBar({ cityId, month }: { cityId: string; month: string }) {
+  const { data, isLoading } = useMonthMetrics(cityId, month);
+
 
   return (
     <div className="space-y-2">
