@@ -110,7 +110,7 @@ function DashboardPage() {
           Math.max(cityMetrics.filter((q) => q.data).length, 1)
         ).toFixed(1)
       : "—";
-  const worstCity = useMemo(() => {
+  const worstCity = useMemo<{ name: string; v: number } | null>(() => {
     let best: { name: string; v: number } | null = null;
     cityMetrics.forEach((q, i) => {
       if (!q.data) return;
