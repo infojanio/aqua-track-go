@@ -89,32 +89,57 @@ function MapPage() {
   return (
     <AppShell>
       <div className="flex h-full flex-col gap-3 overflow-y-auto p-3 sm:p-4">
-        {/* Seletor de cidade da Regional */}
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Building2 className="size-4" />
+        {/* Seletores: cidade + mês de referência */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="flex items-center gap-2 rounded-lg border bg-card p-2">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Building2 className="size-4" />
+            </div>
+            <div className="flex flex-1 flex-col">
+              <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Cidade da Regional
+              </Label>
+              <Select value={cityId} onValueChange={handleCityChange}>
+                <SelectTrigger className="h-8 border-0 bg-transparent px-0 text-sm font-semibold shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {REGIONAL_CITIES.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {cityFullName(c)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex flex-1 flex-col">
-            <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Cidade da Regional
-            </Label>
-            <Select value={cityId} onValueChange={handleCityChange}>
-              <SelectTrigger className="h-9 border-0 bg-transparent px-0 text-sm font-semibold shadow-none focus:ring-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {REGIONAL_CITIES.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {cityFullName(c)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+          <div className="flex items-center gap-2 rounded-lg border bg-card p-2">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Calendar className="size-4" />
+            </div>
+            <div className="flex flex-1 flex-col">
+              <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Mês de referência
+              </Label>
+              <Select value={refMonth} onValueChange={setRefMonth}>
+                <SelectTrigger className="h-8 border-0 bg-transparent px-0 text-sm font-semibold capitalize shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((ym) => (
+                    <SelectItem key={ym} value={ym} className="capitalize">
+                      {formatMonthLabel(ym)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
-        {/* Indicadores do último mês */}
-        <MetricsBar cityId={cityId} />
+        {/* Indicadores do mês selecionado */}
+        <MetricsBar cityId={cityId} month={refMonth} />
 
         {/* Mapa em card */}
         <section className="relative flex-1 min-h-[420px] overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -182,34 +207,6 @@ function MapPage() {
                   </div>
                 </div>
 
-                <div>
-                  <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Período
-                  </Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label htmlFor="from" className="text-[11px] text-muted-foreground">De</Label>
-                      <Input
-                        id="from"
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => setDateFrom(e.target.value)}
-                        className="h-9"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="to" className="text-[11px] text-muted-foreground">Até</Label>
-                      <Input
-                        id="to"
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => setDateTo(e.target.value)}
-                        className="h-9"
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex items-center justify-between border-t pt-2">
                   <span className="text-xs text-muted-foreground">
                     {filteredLeaks.length} de {leaks.length}
@@ -217,11 +214,7 @@ function MapPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
-                      setSelectedTypes(ALL_TYPES);
-                      setDateFrom("");
-                      setDateTo("");
-                    }}
+                    onClick={() => setSelectedTypes(ALL_TYPES)}
                     disabled={!filtersActive}
                   >
                     Limpar
