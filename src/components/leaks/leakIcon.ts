@@ -2,51 +2,68 @@ import L from "leaflet";
 import type { LeakType } from "@/types/leak";
 
 const COLORS: Record<LeakType, string> = {
-  cavalete: "#2b7fd6",
-  ramal: "#e0b13a",
-  rede: "#dc3545",
-  outros: "#6b7280",
+  cavalete: "#1a73e8", // Google blue
+  ramal: "#f9ab00",    // Google amber
+  rede: "#ea4335",     // Google red
+  outros: "#5f6368",   // Google gray
 };
 
-// Ícone padrão (pin de gota destacado)
+// Pushpin clássico estilo Google Earth/Maps:
+// cabeça arredondada com brilho + haste fina + sombra no chão.
+function pushpinSVG(color: string, size = { w: 28, h: 42 }) {
+  const { w, h } = size;
+  return `
+    <svg viewBox="0 0 28 42" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="g" cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="white" stop-opacity="0.85"/>
+          <stop offset="35%" stop-color="${color}" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="${color}"/>
+        </radialGradient>
+      </defs>
+      <!-- haste -->
+      <path d="M14 14 L14 40" stroke="rgba(0,0,0,0.55)" stroke-width="2" stroke-linecap="round"/>
+      <!-- cabeça -->
+      <circle cx="14" cy="12" r="10" fill="url(#g)" stroke="rgba(0,0,0,0.45)" stroke-width="1.2"/>
+      <!-- brilho -->
+      <ellipse cx="10.5" cy="8" rx="3.2" ry="2" fill="white" fill-opacity="0.7"/>
+    </svg>
+  `;
+}
+
+// Ícone padrão (pushpin estilo Google Earth)
 export function leakIcon(type: LeakType, pulse = false) {
   const color = COLORS[type];
   const html = `
-    <div class="leak-pin-wrap">
-      ${pulse ? `<span class="leak-pin-pulse" style="background:${color}"></span>` : ""}
-      <span class="leak-pin-drop" style="--pin-color:${color}">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2.5c-3.6 4.2-6 7.4-6 10.4a6 6 0 0 0 12 0c0-3-2.4-6.2-6-10.4z"/>
-        </svg>
-      </span>
+    <div class="gpin-wrap">
+      ${pulse ? `<span class="gpin-pulse" style="background:${color}"></span>` : ""}
+      <span class="gpin-shadow"></span>
+      <span class="gpin-svg">${pushpinSVG(color)}</span>
     </div>
   `;
   return L.divIcon({
     html,
     className: "leak-pin-icon",
-    iconSize: [36, 46],
-    iconAnchor: [18, 44],
-    popupAnchor: [0, -38],
+    iconSize: [28, 44],
+    iconAnchor: [14, 42],
+    popupAnchor: [0, -36],
   });
 }
 
-// Ícone para o ponto sendo posicionado (arrastável) — bem destacado
+// Ícone para o ponto sendo posicionado (arrastável) — pushpin maior em vermelho.
 export function pickPinIcon() {
+  const color = "#ea4335";
   const html = `
-    <div class="leak-pick-wrap">
-      <span class="leak-pick-pulse"></span>
-      <span class="leak-pick-pin">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s-7-7.6-7-13a7 7 0 1 1 14 0c0 5.4-7 13-7 13z"/>
-          <circle cx="12" cy="9" r="2.6" fill="white" stroke="none"/>
-        </svg>
-      </span>
+    <div class="gpin-wrap gpin-wrap--pick">
+      <span class="gpin-pulse" style="background:${color}"></span>
+      <span class="gpin-shadow"></span>
+      <span class="gpin-svg gpin-bounce">${pushpinSVG(color, { w: 36, h: 54 })}</span>
     </div>
   `;
   return L.divIcon({
     html,
     className: "leak-pin-icon",
-    iconSize: [44, 56],
-    iconAnchor: [22, 54],
+    iconSize: [36, 56],
+    iconAnchor: [18, 54],
   });
 }
