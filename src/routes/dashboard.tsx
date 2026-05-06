@@ -85,12 +85,6 @@ function DashboardPage() {
     () => leaks.filter((l) => l.createdAt.slice(0, 7) === ym),
     [leaks, ym],
   );
-  const leaksByCity = useMemo(() => {
-    return REGIONAL_CITIES.map((c) => ({
-      city: c.name,
-      total: monthLeaks.filter((l) => l.cityId === c.id).length,
-    }));
-  }, [monthLeaks]);
 
   // Índice de perdas (%) por cidade — mês atual, ordenado do menor ao maior
   const lossByCity = useMemo(() => {
