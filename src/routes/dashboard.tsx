@@ -85,12 +85,16 @@ function DashboardPage() {
     () => leaks.filter((l) => l.createdAt.slice(0, 7) === ym),
     [leaks, ym],
   );
-  const leaksByCity = useMemo(() => {
-    return REGIONAL_CITIES.map((c) => ({
+
+  // Índice de perdas (%) por cidade — mês atual, ordenado do menor ao maior
+  const lossByCity = useMemo(() => {
+    return REGIONAL_CITIES.map((c, i) => ({
       city: c.name,
-      total: monthLeaks.filter((l) => l.cityId === c.id).length,
-    }));
-  }, [monthLeaks]);
+      perdas: cityMetrics[i].data ? Number(cityMetrics[i].data!.lossPercent.toFixed(2)) : 0,
+    }))
+      .filter((x) => x.perdas > 0)
+      .sort((a, b) => a.perdas - b.perdas);
+  }, [cityMetrics]);
 
   // Volume perdido por cidade (m³): produzido - faturado
   const lostByCity = useMemo(() => {
@@ -165,18 +169,22 @@ function DashboardPage() {
           </Card>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {/* Vazamentos por cidade */}
+            {/* Índice de perdas por cidade */}
             <Card className="p-4">
-              <h3 className="mb-1 text-sm font-semibold">Vazamentos identificados por cidade</h3>
-              <p className="mb-3 text-xs text-muted-foreground capitalize">{formatMonthLabel(ym)}</p>
+              <h3 className="mb-1 text-sm font-semibold">Controle de perda por cidade (%)</h3>
+              <p className="mb-3 text-xs text-muted-foreground capitalize">{formatMonthLabel(ym)} — ordem crescente</p>
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={leaksByCity} margin={{ left: 0, right: 8, top: 8, bottom: 40 }}>
+                  <BarChart data={lossByCity} margin={{ left: 0, right: 8, top: 16, bottom: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
                     <XAxis dataKey="city" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" interval={0} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Bar dataKey="total" fill="#ea4335" radius={[6, 6, 0, 0]} />
+                    <YAxis unit="%" tick={{ fontSize: 11 }} />
+                    <Tooltip formatter={(v: number) => `${v.toFixed(2)}%`} />
+                    <Bar dataKey="perdas" radius={[6, 6, 0, 0]} label={{ position: "top", fontSize: 10, formatter: (v: number) => v.toFixed(2) }}>
+                      {lossByCity.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
