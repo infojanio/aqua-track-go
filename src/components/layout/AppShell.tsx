@@ -19,15 +19,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="hidden items-center gap-1 sm:flex">
           <NavBtn to="/" icon={<Map className="size-4" />} label="Mapa" active={pathname === "/"} />
           <NavBtn to="/lista" icon={<List className="size-4" />} label="Lista" active={pathname === "/lista"} />
+          <NavBtn to="/dashboard" icon={<LayoutDashboard className="size-4" />} label="Dashboard" active={pathname === "/dashboard"} />
         </nav>
       </header>
 
       <main className="relative flex-1 overflow-hidden">{children}</main>
 
       {/* Mobile bottom nav */}
-      <nav className="grid grid-cols-2 border-t bg-card sm:hidden">
+      <nav className="grid grid-cols-3 border-t bg-card sm:hidden">
         <BottomBtn to="/" icon={<Map className="size-5" />} label="Mapa" active={pathname === "/"} />
         <BottomBtn to="/lista" icon={<List className="size-5" />} label="Lista" active={pathname === "/lista"} />
+        <BottomBtn to="/dashboard" icon={<LayoutDashboard className="size-5" />} label="Dashboard" active={pathname === "/dashboard"} />
       </nav>
     </div>
   );
