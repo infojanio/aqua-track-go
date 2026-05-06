@@ -92,6 +92,16 @@ function DashboardPage() {
     }));
   }, [monthLeaks]);
 
+  // Índice de perdas (%) por cidade — mês atual, ordenado do menor ao maior
+  const lossByCity = useMemo(() => {
+    return REGIONAL_CITIES.map((c, i) => ({
+      city: c.name,
+      perdas: cityMetrics[i].data ? Number(cityMetrics[i].data!.lossPercent.toFixed(2)) : 0,
+    }))
+      .filter((x) => x.perdas > 0)
+      .sort((a, b) => a.perdas - b.perdas);
+  }, [cityMetrics]);
+
   // Volume perdido por cidade (m³): produzido - faturado
   const lostByCity = useMemo(() => {
     return REGIONAL_CITIES.map((c, i) => {
