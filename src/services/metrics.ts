@@ -1,4 +1,5 @@
 import { getCityById, cityFullName } from "@/lib/cities";
+import { getMetricOverride } from "@/lib/adminStore";
 
 // Indicadores mensais da cidade (mockado — pronto para troca por API real)
 export interface MonthlyMetrics {
@@ -24,11 +25,19 @@ function lastMonthISO() {
 
 function computeMetrics(cityId: string, ym: string): MonthlyMetrics {
   const city = getCityById(cityId);
-  const seed = hash(city.id + ym);
-  const produced = 80_000 + (seed % 220_000);
-  const lossRate = 0.18 + ((seed >> 4) % 25) / 100;
-  const billed = Math.round(produced * (1 - lossRate));
-  const loss = ((produced - billed) / produced) * 100;
+  const override = getMetricOverride(cityId, ym);
+  let produced: number;
+  let billed: number;
+  if (override) {
+    produced = override.producedVolumeM3;
+    billed = override.billedVolumeM3;
+  } else {
+    const seed = hash(city.id + ym);
+    produced = 80_000 + (seed % 220_000);
+    const lossRate = 0.18 + ((seed >> 4) % 25) / 100;
+    billed = Math.round(produced * (1 - lossRate));
+  }
+  const loss = produced > 0 ? ((produced - billed) / produced) * 100 : 0;
   return {
     city: cityFullName(city),
     referenceMonth: ym,

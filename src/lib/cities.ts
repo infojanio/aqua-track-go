@@ -7,7 +7,7 @@ export interface City {
   lng: number;
 }
 
-export const REGIONAL_CITIES: City[] = [
+const DEFAULT_CITIES: City[] = [
   { id: "campos-belos", name: "Campos Belos", state: "GO", lat: -13.0356, lng: -46.7728 },
   { id: "alto-paraiso", name: "Alto Paraíso", state: "GO", lat: -14.1326, lng: -47.5103 },
   { id: "cavalcante", name: "Cavalcante", state: "GO", lat: -13.7975, lng: -47.4558 },
@@ -21,6 +21,27 @@ export const REGIONAL_CITIES: City[] = [
   { id: "iaciara", name: "Iaciara", state: "GO", lat: -14.0911, lng: -46.6336 },
   { id: "guarani", name: "Guarani de Goiás", state: "GO", lat: -13.9419, lng: -46.5311 },
 ];
+
+function loadOverride(): City[] | null {
+  try {
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem("aqualoss:cities") : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    return parsed as City[];
+  } catch {
+    return null;
+  }
+}
+
+// Mutable array (kept stable in memory) so admin edits are reflected app-wide.
+export const REGIONAL_CITIES: City[] = loadOverride() ?? [...DEFAULT_CITIES];
+
+export const DEFAULT_REGIONAL_CITIES: ReadonlyArray<City> = DEFAULT_CITIES;
+
+export function replaceRegionalCities(next: City[]) {
+  REGIONAL_CITIES.splice(0, REGIONAL_CITIES.length, ...next);
+}
 
 export const DEFAULT_CITY_ID = "campos-belos";
 
