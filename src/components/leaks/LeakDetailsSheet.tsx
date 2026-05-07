@@ -1,10 +1,10 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LEAK_STATUS_LABEL, LEAK_TYPE_LABEL, type Leak, type LeakStatus } from "@/types/leak";
+import { LEAK_MARKER_LABEL, LEAK_STATUS_LABEL, LEAK_TYPE_LABEL, type Leak, type LeakMarkerType, type LeakStatus } from "@/types/leak";
 import { useUpdateLeak } from "@/hooks/useLeaks";
 import { StatusBadge, TypeBadge } from "./Badges";
-import { Camera, Gauge, Loader2, MapPin } from "lucide-react";
+import { Camera, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useRef } from "react";
 
@@ -23,6 +23,15 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
     try {
       await update.mutateAsync({ id: leak.id, patch: { status } });
       toast.success("Status atualizado");
+    } catch {
+      toast.error("Erro ao atualizar");
+    }
+  };
+
+  const setMarkerType = async (markerType: LeakMarkerType) => {
+    try {
+      await update.mutateAsync({ id: leak.id, patch: { markerType } });
+      toast.success("Tipo de marcador atualizado");
     } catch {
       toast.error("Erro ao atualizar");
     }
@@ -61,7 +70,6 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <Stat label="Tipo" value={LEAK_TYPE_LABEL[leak.type]} />
-            <Stat label="Pressão" value={`${leak.pressure} mca`} icon={<Gauge className="size-4" />} />
             <Stat
               label="Registrado"
               value={new Date(leak.createdAt).toLocaleString("pt-BR")}
@@ -71,6 +79,18 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
               value={`${leak.latitude.toFixed(4)}, ${leak.longitude.toFixed(4)}`}
               icon={<MapPin className="size-4" />}
             />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tipo de marcador</p>
+            <Select value={leak.markerType ?? ""} onValueChange={(v) => setMarkerType(v as LeakMarkerType)}>
+              <SelectTrigger className="h-11"><SelectValue placeholder="Selecione o tipo de marcador" /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(LEAK_MARKER_LABEL) as LeakMarkerType[]).map((m) => (
+                  <SelectItem key={m} value={m}>{LEAK_MARKER_LABEL[m]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {leak.description && (
