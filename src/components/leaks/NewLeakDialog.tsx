@@ -41,6 +41,7 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
   useEffect(() => {
     if (!open) {
       setType("cavalete");
+      setMarkerType("medir_pressao");
       setPressure("");
       setDescription("");
       setDatetime(new Date().toISOString().slice(0, 16));
