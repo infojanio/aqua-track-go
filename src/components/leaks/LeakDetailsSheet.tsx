@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LEAK_MARKER_LABEL, LEAK_STATUS_LABEL, LEAK_TYPE_LABEL, type Leak, type LeakMarkerType, type LeakStatus } from "@/types/leak";
 import { useUpdateLeak } from "@/hooks/useLeaks";
 import { StatusBadge, TypeBadge } from "./Badges";
-import { Camera, Loader2, MapPin } from "lucide-react";
+import { Camera, Cloud, Gauge, Loader2, MapPin, Thermometer } from "lucide-react";
 import { toast } from "sonner";
 import { useRef } from "react";
 
