@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LEAK_TYPE_LABEL, type LeakType } from "@/types/leak";
+import { LEAK_MARKER_LABEL, LEAK_TYPE_LABEL, type LeakMarkerType, type LeakType } from "@/types/leak";
 import { useCreateLeak } from "@/hooks/useLeaks";
+import { fetchCurrentWeather } from "@/services/weather";
 import { Camera, Crosshair, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
