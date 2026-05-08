@@ -1,21 +1,46 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LEAK_MARKER_LABEL, LEAK_STATUS_LABEL, LEAK_TYPE_LABEL, type Leak, type LeakMarkerType, type LeakStatus } from "@/types/leak";
-import { useUpdateLeak } from "@/hooks/useLeaks";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { LEAK_MARKER_LABEL, LEAK_STATUS_LABEL, LEAK_TYPE_LABEL, type Leak, type LeakMarkerType, type LeakStatus, type LeakType } from "@/types/leak";
+import { useDeleteLeak, useUpdateLeak } from "@/hooks/useLeaks";
+import { useAuth } from "@/lib/auth";
 import { StatusBadge, TypeBadge } from "./Badges";
-import { Camera, Cloud, Gauge, Loader2, MapPin, Thermometer } from "lucide-react";
+import { Camera, Cloud, Gauge, Loader2, MapPin, Save, Thermometer, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   leak: Leak | null;
   onClose: () => void;
 }
 
+const LEAK_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
+
 export function LeakDetailsSheet({ leak, onClose }: Props) {
   const update = useUpdateLeak();
+  const remove = useDeleteLeak();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const [type, setType] = useState<LeakType>("cavalete");
+  const [pressure, setPressure] = useState("");
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    if (leak) {
+      setType(leak.type);
+      setPressure(String(leak.pressure));
+      setDescription(leak.description ?? "");
+    }
+  }, [leak]);
 
   if (!leak) return null;
 
@@ -34,6 +59,33 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
       toast.success("Tipo de marcador atualizado");
     } catch {
       toast.error("Erro ao atualizar");
+    }
+  };
+
+  const saveDetails = async () => {
+    const p = Number(pressure);
+    if (pressure === "" || Number.isNaN(p) || p < 0) {
+      toast.error("Pressão inválida");
+      return;
+    }
+    try {
+      await update.mutateAsync({
+        id: leak.id,
+        patch: { type, pressure: p, description: description || undefined },
+      });
+      toast.success("Detalhes atualizados");
+    } catch {
+      toast.error("Erro ao atualizar");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await remove.mutateAsync(leak.id);
+      toast.success("Pino removido");
+      onClose();
+    } catch {
+      toast.error("Erro ao remover");
     }
   };
 
@@ -69,12 +121,6 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Tipo" value={LEAK_TYPE_LABEL[leak.type]} />
-            <Stat
-              label="Pressão (mca)"
-              value={String(leak.pressure)}
-              icon={<Gauge className="size-4" />}
-            />
             <Stat
               label="Registrado"
               value={new Date(leak.createdAt).toLocaleString("pt-BR")}
@@ -100,6 +146,51 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
             )}
           </div>
 
+          <div className="space-y-3 rounded-lg border bg-muted/40 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Editar detalhes</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Tipo</Label>
+                <Select value={type} onValueChange={(v) => setType(v as LeakType)}>
+                  <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {LEAK_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>{LEAK_TYPE_LABEL[t]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5"><Gauge className="size-3.5" /> Pressão (mca)</Label>
+                <Input
+                  inputMode="decimal"
+                  value={pressure}
+                  onChange={(e) => setPressure(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Descrição</Label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                placeholder="Detalhes do vazamento..."
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-10 w-full"
+              onClick={saveDetails}
+              disabled={update.isPending}
+            >
+              {update.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
+              Salvar alterações
+            </Button>
+          </div>
+
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tipo de marcador</p>
             <Select value={leak.markerType ?? ""} onValueChange={(v) => setMarkerType(v as LeakMarkerType)}>
@@ -111,13 +202,6 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
               </SelectContent>
             </Select>
           </div>
-
-          {leak.description && (
-            <div>
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Descrição</p>
-              <p className="text-sm">{leak.description}</p>
-            </div>
-          )}
 
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</p>
@@ -149,6 +233,29 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
                 Adicionar foto do reparo
               </Button>
             </>
+          )}
+
+          {isAdmin && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="h-11 w-full" disabled={remove.isPending}>
+                  {remove.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Trash2 className="mr-2 size-4" />}
+                  Remover pino
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remover este vazamento?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. O pino será removido permanentemente do mapa.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>Remover</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </SheetContent>
