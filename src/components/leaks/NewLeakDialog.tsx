@@ -143,6 +143,18 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
           </div>
 
           <div className="space-y-1.5">
+            <Label>Marcador</Label>
+            <Select value={markerType} onValueChange={(v) => setMarkerType(v as LeakMarkerType)}>
+              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MARKER_TYPES.map((m) => (
+                  <SelectItem key={m} value={m}>{LEAK_MARKER_LABEL[m]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
             <Label>Data e hora</Label>
             <Input
               type="datetime-local"
