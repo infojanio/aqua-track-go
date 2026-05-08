@@ -90,16 +90,19 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
       return;
     }
     try {
+      const weather = await fetchCurrentWeather(coords.lat, coords.lng);
       await create.mutateAsync({
         type,
+        markerType,
         pressure: p,
         description: description || undefined,
         latitude: coords.lat,
         longitude: coords.lng,
+        weather,
         createdAt: new Date(datetime).toISOString(),
         photos: photo ? { before: photo } : undefined,
       });
-      toast.success("Vazamento registrado");
+      toast.success(weather ? `Vazamento registrado · ${weather.condition}, ${weather.temperatureC}ºC` : "Vazamento registrado");
       onOpenChange(false);
     } catch {
       toast.error("Erro ao registrar");
