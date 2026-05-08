@@ -115,7 +115,7 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
         latitude: coords.lat,
         longitude: coords.lng,
         weather,
-        createdAt: new Date(datetime).toISOString(),
+        createdAt: brasiliaLocalToISO(datetime),
         photos: photo ? { before: photo } : undefined,
       });
       toast.success(weather ? `Vazamento registrado · ${weather.condition}, ${weather.temperatureC}ºC` : "Vazamento registrado");
