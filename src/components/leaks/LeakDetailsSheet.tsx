@@ -71,6 +71,11 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <Stat label="Tipo" value={LEAK_TYPE_LABEL[leak.type]} />
             <Stat
+              label="Pressão (mca)"
+              value={String(leak.pressure)}
+              icon={<Gauge className="size-4" />}
+            />
+            <Stat
               label="Registrado"
               value={new Date(leak.createdAt).toLocaleString("pt-BR")}
             />
@@ -79,6 +84,20 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
               value={`${leak.latitude.toFixed(4)}, ${leak.longitude.toFixed(4)}`}
               icon={<MapPin className="size-4" />}
             />
+            {leak.weather && (
+              <>
+                <Stat
+                  label="Condição"
+                  value={leak.weather.condition}
+                  icon={<Cloud className="size-4" />}
+                />
+                <Stat
+                  label="Temperatura"
+                  value={`${leak.weather.temperatureC} ºC`}
+                  icon={<Thermometer className="size-4" />}
+                />
+              </>
+            )}
           </div>
 
           <div className="space-y-2">
