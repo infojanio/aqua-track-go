@@ -21,12 +21,28 @@ interface Props {
 const LEAK_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
 const MARKER_TYPES: LeakMarkerType[] = ["medir_pressao", "pesquisa_haste", "pesquisa_geofone", "outros"];
 
+// Brasília (America/Sao_Paulo, UTC-3, sem horário de verão)
+function nowBrasiliaLocal(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
+// Converte "YYYY-MM-DDTHH:mm" (assumido em Brasília, UTC-3) para ISO UTC
+function brasiliaLocalToISO(local: string): string {
+  return new Date(`${local}:00-03:00`).toISOString();
+}
+
 export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPoint }: Props) {
   const [type, setType] = useState<LeakType>("cavalete");
   const [markerType, setMarkerType] = useState<LeakMarkerType>("medir_pressao");
   const [pressure, setPressure] = useState<string>("");
   const [description, setDescription] = useState("");
-  const [datetime, setDatetime] = useState(() => new Date().toISOString().slice(0, 16));
+  const [datetime, setDatetime] = useState(() => nowBrasiliaLocal());
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [photo, setPhoto] = useState<string | undefined>();
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -44,7 +60,7 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
       setMarkerType("medir_pressao");
       setPressure("");
       setDescription("");
-      setDatetime(new Date().toISOString().slice(0, 16));
+      setDatetime(nowBrasiliaLocal());
       setCoords(null);
       setPhoto(undefined);
     }
@@ -99,7 +115,7 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
         latitude: coords.lat,
         longitude: coords.lng,
         weather,
-        createdAt: new Date(datetime).toISOString(),
+        createdAt: brasiliaLocalToISO(datetime),
         photos: photo ? { before: photo } : undefined,
       });
       toast.success(weather ? `Vazamento registrado · ${weather.condition}, ${weather.temperatureC}ºC` : "Vazamento registrado");
