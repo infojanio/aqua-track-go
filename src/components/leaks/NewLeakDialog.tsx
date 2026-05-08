@@ -44,7 +44,7 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
       setMarkerType("medir_pressao");
       setPressure("");
       setDescription("");
-      setDatetime(new Date().toISOString().slice(0, 16));
+      setDatetime(nowBrasiliaLocal());
       setCoords(null);
       setPhoto(undefined);
     }
