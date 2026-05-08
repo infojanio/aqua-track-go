@@ -19,9 +19,11 @@ interface Props {
 }
 
 const LEAK_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
+const MARKER_TYPES: LeakMarkerType[] = ["medir_pressao", "pesquisa_haste", "pesquisa_geofone", "outros"];
 
 export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPoint }: Props) {
   const [type, setType] = useState<LeakType>("cavalete");
+  const [markerType, setMarkerType] = useState<LeakMarkerType>("medir_pressao");
   const [pressure, setPressure] = useState<string>("");
   const [description, setDescription] = useState("");
   const [datetime, setDatetime] = useState(() => new Date().toISOString().slice(0, 16));
