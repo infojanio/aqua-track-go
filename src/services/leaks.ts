@@ -36,6 +36,12 @@ export const leaksService = {
     return leak;
   },
 
+  // DELETE /leaks/:id
+  async remove(id: string): Promise<void> {
+    await delay();
+    store = store.filter((l) => l.id !== id);
+  },
+
   // PATCH /leaks/:id
   async update(id: string, patch: UpdateLeakInput): Promise<Leak> {
     await delay();

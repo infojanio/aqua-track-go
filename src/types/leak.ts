@@ -44,6 +44,8 @@ export interface CreateLeakInput {
 
 export interface UpdateLeakInput {
   status?: LeakStatus;
+  type?: LeakType;
+  pressure?: number;
   markerType?: LeakMarkerType;
   photos?: { before?: string; after?: string };
   description?: string;

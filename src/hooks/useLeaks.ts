@@ -27,3 +27,11 @@ export function useUpdateLeak() {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 }
+
+export function useDeleteLeak() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => leaksService.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+}
