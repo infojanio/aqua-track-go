@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LEAK_TYPE_LABEL, type LeakType } from "@/types/leak";
+import { LEAK_MARKER_LABEL, LEAK_TYPE_LABEL, type LeakMarkerType, type LeakType } from "@/types/leak";
 import { useCreateLeak } from "@/hooks/useLeaks";
+import { fetchCurrentWeather } from "@/services/weather";
 import { Camera, Crosshair, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,9 +19,11 @@ interface Props {
 }
 
 const LEAK_TYPES: LeakType[] = ["cavalete", "ramal", "rede", "outros"];
+const MARKER_TYPES: LeakMarkerType[] = ["medir_pressao", "pesquisa_haste", "pesquisa_geofone", "outros"];
 
 export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPoint }: Props) {
   const [type, setType] = useState<LeakType>("cavalete");
+  const [markerType, setMarkerType] = useState<LeakMarkerType>("medir_pressao");
   const [pressure, setPressure] = useState<string>("");
   const [description, setDescription] = useState("");
   const [datetime, setDatetime] = useState(() => new Date().toISOString().slice(0, 16));
@@ -38,6 +41,7 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
   useEffect(() => {
     if (!open) {
       setType("cavalete");
+      setMarkerType("medir_pressao");
       setPressure("");
       setDescription("");
       setDatetime(new Date().toISOString().slice(0, 16));
@@ -86,16 +90,19 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
       return;
     }
     try {
+      const weather = await fetchCurrentWeather(coords.lat, coords.lng);
       await create.mutateAsync({
         type,
+        markerType,
         pressure: p,
         description: description || undefined,
         latitude: coords.lat,
         longitude: coords.lng,
+        weather,
         createdAt: new Date(datetime).toISOString(),
         photos: photo ? { before: photo } : undefined,
       });
-      toast.success("Vazamento registrado");
+      toast.success(weather ? `Vazamento registrado · ${weather.condition}, ${weather.temperatureC}ºC` : "Vazamento registrado");
       onOpenChange(false);
     } catch {
       toast.error("Erro ao registrar");
@@ -133,6 +140,18 @@ export function NewLeakDialog({ open, onOpenChange, onRequestPickOnMap, pickedPo
                 className="h-11"
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Marcador</Label>
+            <Select value={markerType} onValueChange={(v) => setMarkerType(v as LeakMarkerType)}>
+              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MARKER_TYPES.map((m) => (
+                  <SelectItem key={m} value={m}>{LEAK_MARKER_LABEL[m]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">

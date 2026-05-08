@@ -2,6 +2,11 @@ export type LeakType = "cavalete" | "ramal" | "rede" | "outros";
 export type LeakStatus = "open" | "in_progress" | "done";
 export type LeakMarkerType = "medir_pressao" | "pesquisa_haste" | "pesquisa_geofone" | "outros";
 
+export interface WeatherInfo {
+  condition: string;
+  temperatureC: number;
+}
+
 export interface Leak {
   id: string;
   type: LeakType;
@@ -14,6 +19,7 @@ export interface Leak {
   cityId?: string;
   /** Volume estimado de água perdida em m³ */
   lostVolumeM3?: number;
+  weather?: WeatherInfo;
   createdAt: string;
   updatedAt?: string;
   photos: {
@@ -25,11 +31,13 @@ export interface Leak {
 export interface CreateLeakInput {
   type: LeakType;
   pressure: number;
+  markerType?: LeakMarkerType;
   description?: string;
   latitude: number;
   longitude: number;
   cityId?: string;
   lostVolumeM3?: number;
+  weather?: WeatherInfo;
   createdAt?: string;
   photos?: { before?: string };
 }
