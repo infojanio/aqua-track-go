@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import type { LatLngExpression } from "leaflet";
 import { AppShell } from "@/components/layout/AppShell";
@@ -18,8 +18,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { currentYM, lastNMonths, formatMonthLabel } from "@/lib/dates";
 
+type IndexSearch = { focus?: string };
+
 export const Route = createFileRoute("/")({
   component: MapPage,
+  validateSearch: (search: Record<string, unknown>): IndexSearch => {
+    const focus = typeof search.focus === "string" ? search.focus : undefined;
+    return focus ? { focus } : {};
+  },
 });
 
 function MapPage() {
@@ -28,6 +34,9 @@ function MapPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pickMode, setPickMode] = useState(false);
   const [pickedPoint, setPickedPoint] = useState<{ lat: number; lng: number } | null>(null);
+
+  const { focus } = Route.useSearch();
+  const navigate = useNavigate();
 
   const [cityId, setCityId] = useState<string>(DEFAULT_CITY_ID);
   const city = getCityById(cityId);
@@ -71,6 +80,22 @@ function MapPage() {
       cancelled = true;
     };
   }, []);
+
+  // Foca em um vazamento específico vindo da lista (?focus=<id>)
+  useEffect(() => {
+    if (!focus || leaks.length === 0) return;
+    const target = leaks.find((l) => l.id === focus);
+    if (!target) return;
+    if (target.cityId && target.cityId !== cityId) setCityId(target.cityId);
+    const ym = target.createdAt.slice(0, 7);
+    if (ym !== refMonth) setRefMonth(ym);
+    setSelectedTypes((prev) => (prev.includes(target.type) ? prev : [...prev, target.type]));
+    setCenter([target.latitude, target.longitude]);
+    setUsingGps(false);
+    setSelected(target);
+    navigate({ to: "/", search: {}, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus, leaks]);
 
   // Quando o usuário troca a cidade, recentralizamos o mapa nela
   const handleCityChange = (id: string) => {
