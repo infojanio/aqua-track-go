@@ -18,11 +18,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { currentYM, lastNMonths, formatMonthLabel } from "@/lib/dates";
 
+type IndexSearch = { focus?: string };
+
 export const Route = createFileRoute("/")({
   component: MapPage,
-  validateSearch: (search: Record<string, unknown>) => ({
-    focus: typeof search.focus === "string" ? search.focus : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): IndexSearch => {
+    const focus = typeof search.focus === "string" ? search.focus : undefined;
+    return focus ? { focus } : {};
+  },
 });
 
 function MapPage() {
