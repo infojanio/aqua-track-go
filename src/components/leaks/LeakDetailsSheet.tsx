@@ -220,20 +220,16 @@ export function LeakDetailsSheet({ leak, onClose }: Props) {
             <PhotoBlock label="Depois" src={leak.photos.after} />
           </div>
 
-          {leak.status === "done" && !leak.photos.after && (
-            <>
-              <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={uploadAfter} />
-              <Button
-                variant="secondary"
-                className="h-11 w-full"
-                onClick={() => fileRef.current?.click()}
-                disabled={update.isPending}
-              >
-                {update.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Camera className="mr-2 size-4" />}
-                Adicionar foto do reparo
-              </Button>
-            </>
-          )}
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={uploadAfter} />
+          <Button
+            variant="secondary"
+            className="h-11 w-full"
+            onClick={() => fileRef.current?.click()}
+            disabled={update.isPending}
+          >
+            {update.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Camera className="mr-2 size-4" />}
+            {leak.photos.after ? "Substituir foto do reparo" : "Adicionar foto do reparo"}
+          </Button>
 
           {isAdmin && (
             <AlertDialog>
