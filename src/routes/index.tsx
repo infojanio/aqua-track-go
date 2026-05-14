@@ -81,6 +81,22 @@ function MapPage() {
     };
   }, []);
 
+  // Foca em um vazamento específico vindo da lista (?focus=<id>)
+  useEffect(() => {
+    if (!focus || leaks.length === 0) return;
+    const target = leaks.find((l) => l.id === focus);
+    if (!target) return;
+    if (target.cityId && target.cityId !== cityId) setCityId(target.cityId);
+    const ym = target.createdAt.slice(0, 7);
+    if (ym !== refMonth) setRefMonth(ym);
+    setSelectedTypes((prev) => (prev.includes(target.type) ? prev : [...prev, target.type]));
+    setCenter([target.latitude, target.longitude]);
+    setUsingGps(false);
+    setSelected(target);
+    navigate({ to: "/", search: {}, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus, leaks]);
+
   // Quando o usuário troca a cidade, recentralizamos o mapa nela
   const handleCityChange = (id: string) => {
     setCityId(id);
