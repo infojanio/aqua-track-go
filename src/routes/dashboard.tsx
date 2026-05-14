@@ -22,7 +22,7 @@ import { REGIONAL_CITIES, getCityById } from "@/lib/cities";
 import { metricsService } from "@/services/metrics";
 import { useQueries } from "@tanstack/react-query";
 import { currentYM, lastNMonths, shortMonthLabel, formatMonthLabel } from "@/lib/dates";
-import { Activity, Droplets, AlertTriangle, Gauge } from "lucide-react";
+import { Activity, Droplets, AlertTriangle, Gauge, Trophy, Medal, Award } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
@@ -220,8 +220,15 @@ function DashboardPage() {
           {/* Tabela compacta por cidade */}
           <Card className="overflow-hidden p-0">
             <div className="border-b p-4">
-              <h3 className="text-sm font-semibold">Resumo por cidade</h3>
-              <p className="text-xs text-muted-foreground capitalize">{formatMonthLabel(ym)}</p>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold">Resumo por cidade</h3>
+                  <p className="text-xs text-muted-foreground capitalize">{formatMonthLabel(ym)} — ranking por menor perda</p>
+                </div>
+                <span className="rounded-full bg-[color-mix(in_oklab,var(--status-done)_15%,transparent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--status-done)]">
+                  Meta &lt; 27%
+                </span>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -236,21 +243,51 @@ function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {REGIONAL_CITIES.map((c, i) => {
-                    const m = cityMetrics[i].data;
-                    const leaksCount = monthLeaks.filter((l) => l.cityId === c.id).length;
-                    const lost = m ? m.producedVolumeM3 - m.billedVolumeM3 : 0;
-                    return (
-                      <tr key={c.id} className="border-t">
-                        <td className="px-4 py-2 font-medium">{c.name}</td>
-                        <td className="px-4 py-2 text-right tabular-nums">{m ? fmtM3(m.producedVolumeM3) : "—"}</td>
-                        <td className="px-4 py-2 text-right tabular-nums">{m ? fmtM3(m.billedVolumeM3) : "—"}</td>
-                        <td className="px-4 py-2 text-right tabular-nums">{m ? fmtM3(lost) : "—"}</td>
-                        <td className="px-4 py-2 text-right tabular-nums">{m ? `${m.lossPercent.toFixed(1)}%` : "—"}</td>
-                        <td className="px-4 py-2 text-right tabular-nums">{leaksCount}</td>
-                      </tr>
-                    );
-                  })}
+                  {REGIONAL_CITIES.map((c, i) => ({
+                    c,
+                    m: cityMetrics[i].data,
+                    leaksCount: monthLeaks.filter((l) => l.cityId === c.id).length,
+                  }))
+                    .sort((a, b) => {
+                      const av = a.m ? a.m.lossPercent : Number.POSITIVE_INFINITY;
+                      const bv = b.m ? b.m.lossPercent : Number.POSITIVE_INFINITY;
+                      return av - bv;
+                    })
+                    .map(({ c, m, leaksCount }, idx) => {
+                      const lost = m ? m.producedVolumeM3 - m.billedVolumeM3 : 0;
+                      const below = m ? m.lossPercent < 27 : false;
+                      const rankIcon =
+                        idx === 0 ? <Trophy className="size-4 text-[#d4a017]" /> :
+                        idx === 1 ? <Medal className="size-4 text-[#9aa0a6]" /> :
+                        idx === 2 ? <Award className="size-4 text-[#cd7f32]" /> : null;
+                      return (
+                        <tr
+                          key={c.id}
+                          className={`border-t ${below ? "bg-[color-mix(in_oklab,var(--status-done)_8%,transparent)]" : ""}`}
+                        >
+                          <td className="px-4 py-2 font-medium">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex size-5 items-center justify-center text-xs font-semibold text-muted-foreground tabular-nums">
+                                {rankIcon ?? idx + 1}
+                              </span>
+                              <span>{c.name}</span>
+                              {below && (
+                                <span className="rounded-full bg-[color-mix(in_oklab,var(--status-done)_18%,transparent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--status-done)]">
+                                  Meta
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 text-right tabular-nums">{m ? fmtM3(m.producedVolumeM3) : "—"}</td>
+                          <td className="px-4 py-2 text-right tabular-nums">{m ? fmtM3(m.billedVolumeM3) : "—"}</td>
+                          <td className="px-4 py-2 text-right tabular-nums">{m ? fmtM3(lost) : "—"}</td>
+                          <td className={`px-4 py-2 text-right tabular-nums font-semibold ${below ? "text-[var(--status-done)]" : ""}`}>
+                            {m ? `${m.lossPercent.toFixed(1)}%` : "—"}
+                          </td>
+                          <td className="px-4 py-2 text-right tabular-nums">{leaksCount}</td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
