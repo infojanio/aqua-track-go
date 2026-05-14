@@ -20,6 +20,9 @@ import { currentYM, lastNMonths, formatMonthLabel } from "@/lib/dates";
 
 export const Route = createFileRoute("/")({
   component: MapPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    focus: typeof search.focus === "string" ? search.focus : undefined,
+  }),
 });
 
 function MapPage() {
