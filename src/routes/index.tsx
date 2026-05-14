@@ -297,12 +297,10 @@ function MapPage() {
                 );
               })}
             </div>
-          </div>
-
-          {/* Stats */}
-          <div className="pointer-events-none absolute right-3 top-3 z-[400] flex gap-2">
-            <StatPill label="Total" value={filteredLeaks.length} />
-            <StatPill label="Abertos" value={filteredLeaks.filter((l) => l.status === "open").length} accent="open" />
+            <div className="mt-2 flex gap-1.5 border-t pt-2">
+              <StatPill label="Total" value={filteredLeaks.length} />
+              <StatPill label="Abertos" value={filteredLeaks.filter((l) => l.status === "open").length} accent="open" />
+            </div>
           </div>
 
           {/* Indicador de localização */}
