@@ -35,6 +35,9 @@ function MapPage() {
   const [pickMode, setPickMode] = useState(false);
   const [pickedPoint, setPickedPoint] = useState<{ lat: number; lng: number } | null>(null);
 
+  const { focus } = Route.useSearch();
+  const navigate = useNavigate();
+
   const [cityId, setCityId] = useState<string>(DEFAULT_CITY_ID);
   const city = getCityById(cityId);
   const [center, setCenter] = useState<LatLngExpression>([city.lat, city.lng]);
