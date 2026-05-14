@@ -241,7 +241,12 @@ function MapPage() {
             <div className="flex flex-col gap-1">
               {ALL_TYPES.map((t) => {
                 const active = selectedTypes.includes(t);
-                const count = leaks.filter((l) => l.type === t).length;
+                const count = leaks.filter(
+                  (l) =>
+                    l.type === t &&
+                    (!l.cityId || l.cityId === cityId) &&
+                    l.createdAt.slice(0, 7) === refMonth,
+                ).length;
                 return (
                   <button
                     key={t}
